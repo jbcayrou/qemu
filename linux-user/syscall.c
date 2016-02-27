@@ -52,6 +52,9 @@ int __clone2(int (*fn)(void *), void *child_stack_base,
 #include <sys/sysinfo.h>
 #include <sys/signalfd.h>
 //#include <sys/user.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
+#include <linux/if_packet.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <linux/wireless.h>
@@ -3647,6 +3650,61 @@ static abi_long do_ioctl_ifconf(const IOCTLEntry *ie, uint8_t *buf_temp,
     if (free_buf) {
         free(host_ifconf);
     }
+
+    return ret;
+}
+
+static abi_long do_ioctl_ethtool(const IOCTLEntry *ie, uint8_t *buf_temp,
+                                 int fd, int cmd, abi_long arg)
+{
+    const argtype *arg_type = ie->arg_type;
+    int target_size;
+    void *argptr;
+    int ret;
+    struct ifreq *host_ifreq;
+    //uint32_t outbufsz;
+    //int target_ifreq_size;
+    //int nb_ifreq;
+    //int free_buf = 0;
+    //int i;
+    //int target_ifc_len;
+    //abi_long target_ifc_buf;
+    //abi_long target_ifreq_data;
+    //int target_ethtool_cmd_len;
+
+    //int host_ifc_len;
+    //char *host_ifc_buf;
+
+    assert(arg_type[0] == TYPE_PTR);
+    assert(ie->access == IOC_RW);
+
+    arg_type++;
+    target_size = thunk_type_size(arg_type, 0);
+    //target_ethtool_cmd_len = sizeof(struct ethtool_cmd));
+
+
+    argptr = lock_user(VERIFY_READ, arg, target_size, 1);
+    if (!argptr)
+        return -TARGET_EFAULT;
+    thunk_convert(buf_temp, argptr, arg_type, THUNK_HOST);
+    unlock_user(argptr, arg, 0);
+
+    host_ifreq = (struct ifreq *)(unsigned long)buf_temp;
+
+    // Backup the target address of ifr_data
+    //target_ifreq_data = (abi_long)(unsigned long)host_ifreq->ifr_data;
+
+    ret = get_errno(ioctl(fd, ie->host_cmd, host_ifreq));
+    if (!is_error(ret)) {
+
+    /* copy struct ifreq to target user */
+        argptr = lock_user(VERIFY_WRITE, arg, target_size, 0);
+        if (!argptr)
+            return -TARGET_EFAULT;
+        thunk_convert(argptr, host_ifreq, arg_type, THUNK_TARGET);
+        unlock_user(argptr, arg, target_size);
+    }
+
 
     return ret;
 }

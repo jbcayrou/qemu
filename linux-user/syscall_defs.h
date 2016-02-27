@@ -902,6 +902,20 @@ struct target_pollfd {
 #define TARGET_SIOCADDMULTI    0x8931          /* Multicast address lists      */
 #define TARGET_SIOCDELMULTI    0x8932
 #define TARGET_SIOCGIFINDEX    0x8933
+#define TARGET_SIOGIFINDEX     TARGET_SIOCGIFINDEX /* misprint compatibilit    */
+#define TARGET_SIOCSIFPFLAGS   0x8934          /*set/get extended flags set*/
+#define TARGET_SIOCGIFPFLAGS   0x8935
+#define TARGET_SIOCDIFADDR     0x8936          /* delete PA address            */
+#define TARGET_SIOCSIFHWBROADCAST      0x8937  /* set hardware broadcast addr  */
+#define TARGET_SIOCGIFCOUNT    0x8938          /* get number of devices */
+
+#define TARGET_SIOCGIFBR       0x8940          /* Bridging support             */
+#define TARGET_SIOCSIFBR       0x8941          /* Set bridging options         */
+
+#define TARGET_SIOCGIFTXQLEN   0x8942          /* Get the tx queue length      */
+#define TARGET_SIOCSIFTXQLEN   0x8943          /* Set the tx queue length      */
+
+#define TARGET_SIOCETHTOOL     0x8946          /* Ethtool interface            */
 
 /* Bridging control calls */
 #define TARGET_SIOCGIFBR       0x8940          /* Bridging support             */

@@ -386,3 +386,6 @@
                 MK_PTR(MK_STRUCT(STRUCT_rtentry)))
   IOCTL_SPECIAL(SIOCDELRT, IOC_W, do_ioctl_rt,
                 MK_PTR(MK_STRUCT(STRUCT_rtentry)))
+
+  IOCTL_SPECIAL(SIOCETHTOOL, IOC_RW, do_ioctl_ethtool,
+                MK_PTR(MK_STRUCT(STRUCT_ptr_ifreq)))

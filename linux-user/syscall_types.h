@@ -48,6 +48,21 @@ STRUCT(ptr_ifreq,
 STRUCT(ifconf,
        TYPE_INT, TYPE_PTRVOID)
 
+STRUCT(ethtool_cmd,
+       TYPE_INT,                   /* cmd            */
+       TYPE_INT,                   /* supported      */
+       TYPE_INT,                   /* advertising    */
+       TYPE_SHORT,                 /* speed          */
+       TYPE_CHAR,                  /* duplex         */
+       TYPE_CHAR,                  /* port           */
+       TYPE_CHAR,                  /* phy_address    */
+       TYPE_CHAR,                  /* transceiver    */
+       TYPE_CHAR,                  /* autoneg        */
+       TYPE_INT,                   /* maxtxpkt       */
+       TYPE_INT,                   /* maxrxpkt       */
+       MK_ARRAY(TYPE_CHAR, 4)      /* reservered     */
+       )
+
 STRUCT(arpreq,
        MK_STRUCT(STRUCT_sockaddr), MK_STRUCT(STRUCT_sockaddr), TYPE_INT, MK_STRUCT(STRUCT_sockaddr),
        MK_ARRAY(TYPE_CHAR, 16))
