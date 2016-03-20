@@ -168,6 +168,44 @@ struct target_ip_mreq_source {
     uint32_t imr_sourceaddr;
 };
 
+struct target_tpacket_req {
+    uint32_t     tp_block_size;  /* Minimal size of contiguous block */
+    uint32_t     tp_block_nr;    /* Number of blocks */
+    uint32_t     tp_frame_size;  /* Size of frame */
+    uint32_t     tp_frame_nr;    /* Total number of frames */
+};
+
+struct target_tpacket_req3 {
+    uint32_t    tp_block_size;  /* Minimal size of contiguous block */
+    uint32_t    tp_block_nr;    /* Number of blocks */
+    uint32_t    tp_frame_size;  /* Size of frame */
+    uint32_t    tp_frame_nr;    /* Total number of frames */
+    uint32_t    tp_retire_blk_tov; /* timeout in msecs */
+    uint32_t    tp_sizeof_priv; /* offset to private data area */
+    uint32_t    tp_feature_req_word;
+};
+
+struct target_tpacket_stats {
+    uint32_t    tp_packets;
+    uint32_t    tp_drops;
+};
+
+struct target_tpacket_stats_v3 {
+    uint32_t    tp_packets;
+    uint32_t    tp_drops;
+    uint32_t    tp_freeze_q_cnt;
+};
+
+struct target_tpacket_auxdata {
+    uint32_t tp_status;
+    uint32_t tp_len;
+    uint32_t tp_snaplen;
+    uint16_t tp_mac;
+    uint16_t tp_net;
+    uint16_t tp_vlan_tci;
+    uint16_t tp_vlan_tpid;
+};
+
 struct target_timeval {
     abi_long tv_sec;
     abi_long tv_usec;

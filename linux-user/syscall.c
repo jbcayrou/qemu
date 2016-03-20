@@ -902,7 +902,7 @@ static inline rlim_t target_to_host_rlim(abi_ulong target_rlim)
 {
     abi_ulong target_rlim_swap;
     rlim_t result;
-    
+
     target_rlim_swap = tswapal(target_rlim);
     if (target_rlim_swap == TARGET_RLIM_INFINITY)
         return RLIM_INFINITY;
@@ -910,7 +910,7 @@ static inline rlim_t target_to_host_rlim(abi_ulong target_rlim)
     result = target_rlim_swap;
     if (target_rlim_swap != (rlim_t)result)
         return RLIM_INFINITY;
-    
+
     return result;
 }
 
@@ -918,13 +918,13 @@ static inline abi_ulong host_to_target_rlim(rlim_t rlim)
 {
     abi_ulong target_rlim_swap;
     abi_ulong result;
-    
+
     if (rlim == RLIM_INFINITY || rlim != (abi_long)rlim)
         target_rlim_swap = TARGET_RLIM_INFINITY;
     else
         target_rlim_swap = rlim;
     result = tswapal(target_rlim_swap);
-    
+
     return result;
 }
 
@@ -1168,6 +1168,85 @@ static inline abi_long target_to_host_ip_mreq(struct ip_mreqn *mreqn,
     return 0;
 }
 
+static inline abi_long target_to_host_tpacket_req(struct tpacket_req *pkt_req,
+                                                  abi_ulong target_addr,
+                                                  socklen_t len)
+{
+    struct target_tpacket_req *target_pkt_req;
+
+    target_pkt_req = lock_user(VERIFY_READ, target_addr, len, 1);
+    if (!target_pkt_req)
+        return -TARGET_EFAULT;
+
+    pkt_req->tp_block_size = tswap32(target_pkt_req->tp_block_size);
+    pkt_req->tp_block_nr = tswap32(target_pkt_req->tp_block_nr);
+    pkt_req->tp_frame_size = tswap32(target_pkt_req->tp_frame_size);
+    pkt_req->tp_frame_nr = tswap32(target_pkt_req->tp_frame_nr);
+
+    unlock_user(target_pkt_req, target_addr, 0);
+
+    return 0;
+}
+
+static inline abi_long target_to_host_tpacket_req3(struct tpacket_req3 *pkt_req,
+                                                   abi_ulong target_addr,
+                                                   socklen_t len)
+{
+    struct target_tpacket_req3 *target_pkt_req;
+
+    target_pkt_req = lock_user(VERIFY_READ, target_addr, len, 1);
+    if (!target_pkt_req)
+        return -TARGET_EFAULT;
+
+    pkt_req->tp_block_size = tswap32(target_pkt_req->tp_block_size);
+    pkt_req->tp_block_nr = tswap32(target_pkt_req->tp_block_nr);
+    pkt_req->tp_frame_size = tswap32(target_pkt_req->tp_frame_size);
+    pkt_req->tp_frame_nr = tswap32(target_pkt_req->tp_frame_nr);
+    pkt_req->tp_retire_blk_tov = tswap32(target_pkt_req->tp_retire_blk_tov);
+    pkt_req->tp_sizeof_priv = tswap32(target_pkt_req->tp_sizeof_priv);
+    pkt_req->tp_feature_req_word = tswap32(target_pkt_req->tp_feature_req_word);
+
+
+    unlock_user(target_pkt_req, target_addr, 0);
+
+    return 0;
+}
+
+static inline abi_long target_to_host_tpacket_stats(struct tpacket_stats *pkt_stats,
+                                                    abi_ulong target_addr,
+                                                    socklen_t len)
+{
+    struct tpacket_stats *target_pkt_stats;
+    target_pkt_stats = lock_user(VERIFY_READ, target_addr, len, 1);
+    if (!target_pkt_stats)
+        return -TARGET_EFAULT;
+
+    __get_user(pkt_stats->tp_packets, &target_pkt_stats->tp_packets);
+    __get_user(pkt_stats->tp_drops, &target_pkt_stats->tp_drops);
+
+    unlock_user(target_pkt_stats, target_addr, 0);
+
+    return 0;
+}
+
+static inline abi_long target_to_host_tpacket_stats3(struct tpacket_stats_v3 *pkt_stats,
+                                                     abi_ulong target_addr,
+                                                     socklen_t len)
+{
+    struct tpacket_stats_v3 *target_pkt_stats;
+
+    target_pkt_stats = lock_user(VERIFY_READ, target_addr, len, 1);
+    if (!target_pkt_stats)
+        return -TARGET_EFAULT;
+    __get_user(pkt_stats->tp_packets, &target_pkt_stats->tp_packets);
+    __get_user(pkt_stats->tp_drops, &target_pkt_stats->tp_drops);
+    __get_user(pkt_stats->tp_freeze_q_cnt, &target_pkt_stats->tp_freeze_q_cnt);;
+
+    unlock_user(target_pkt_stats, target_addr, 0);
+
+    return 0;
+}
+
 static inline abi_long target_to_host_sockaddr(int fd, struct sockaddr *addr,
                                                abi_ulong target_addr,
                                                socklen_t len)
@@ -1243,9 +1322,9 @@ static inline abi_long target_to_host_cmsg(struct msghdr *msgh,
     abi_ulong target_cmsg_addr;
     struct target_cmsghdr *target_cmsg, *target_cmsg_start;
     socklen_t space = 0;
-    
+
     msg_controllen = tswapal(target_msgh->msg_controllen);
-    if (msg_controllen < sizeof (struct target_cmsghdr)) 
+    if (msg_controllen < sizeof (struct target_cmsghdr))
         goto the_end;
     target_cmsg_addr = tswapal(target_msgh->msg_control);
     target_cmsg = lock_user(VERIFY_READ, target_cmsg_addr, msg_controllen, 1);
@@ -1327,7 +1406,7 @@ static inline abi_long host_to_target_cmsg(struct target_msghdr *target_msgh,
     socklen_t space = 0;
 
     msg_controllen = tswapal(target_msgh->msg_controllen);
-    if (msg_controllen < sizeof (struct target_cmsghdr)) 
+    if (msg_controllen < sizeof (struct target_cmsghdr))
         goto the_end;
     target_cmsg_addr = tswapal(target_msgh->msg_control);
     target_cmsg = lock_user(VERIFY_WRITE, target_cmsg_addr, msg_controllen, 0);
@@ -1573,6 +1652,80 @@ static abi_long do_setsockopt(int sockfd, int level, int optname,
             goto unimplemented;
         }
         break;
+    case SOL_PACKET:
+
+        switch(optname) {
+            case PACKET_ADD_MEMBERSHIP:
+            case PACKET_DROP_MEMBERSHIP:
+                if (optlen < sizeof (struct target_ip_mreq) ||
+                    optlen > sizeof (struct target_ip_mreqn))
+                    return -TARGET_EINVAL;
+
+                ip_mreq = (struct ip_mreqn *) alloca(optlen);
+                target_to_host_ip_mreq(ip_mreq, optval_addr, optlen);
+                ret = get_errno(setsockopt(sockfd, level, optname, ip_mreq, optlen));
+            break;
+
+            case PACKET_AUXDATA:
+                /*
+                struct tpacket_auxdata * host_tpacket_auxdata;
+                host_tpacket_auxdata = (struct tpacket_auxdata*) alloca(optlen);
+
+                target_to_host_tpacket_auxdata(host_tpacket_auxdata, optval_addr, optlen);
+                ret = get_errno(setsockopt(sockfd, level, optname,
+                                           &host_tpacket_auxdata, optlen));
+                break;
+                */
+            case PACKET_RESERVE:
+                /* This options takes an u32 value */
+
+            case PACKET_VERSION:
+                /* This options takes an u32 value */
+                val = 0;
+                if (optlen < sizeof(uint32_t)) {
+                    return -TARGET_EINVAL;
+                }
+
+                if (get_user_u32(val, optval_addr)) {
+                    return -TARGET_EFAULT;
+                }
+                ret = get_errno(setsockopt(sockfd, level, optname,
+                                           &val, sizeof(val)));
+
+            break;
+
+            case PACKET_RX_RING:
+            {
+
+                if (optlen == sizeof(struct target_tpacket_req3)) // TPACKET_V3
+                {
+                    struct tpacket_req3* host_tpacket_req;
+                    host_tpacket_req = (struct tpacket_req3*) alloca(optlen);
+
+                    target_to_host_tpacket_req3(host_tpacket_req, optval_addr, optlen);
+                    ret = get_errno(setsockopt(sockfd, level, optname,
+                                               host_tpacket_req, optlen));
+                }
+                else if (optlen == sizeof (struct target_tpacket_req))
+                {
+                    //TPACKET_V1 or TPACKET_V2
+                    struct tpacket_req* host_tpacket_req;
+                    host_tpacket_req = (struct tpacket_req*) alloca(optlen);
+
+                    target_to_host_tpacket_req(host_tpacket_req, optval_addr, optlen);
+                    ret = get_errno(setsockopt(sockfd, level, optname,
+                                               host_tpacket_req, optlen));
+
+                }
+                else{
+                    return -TARGET_EINVAL;
+                }
+            break;
+            }
+            default:
+                goto unimplemented;
+        }
+    break;
     case TARGET_SOL_SOCKET:
         switch (optname) {
         case TARGET_SO_RCVTIMEO:
@@ -1748,6 +1901,83 @@ static abi_long do_getsockopt(int sockfd, int level, int optname,
     socklen_t lv;
 
     switch(level) {
+    case SOL_PACKET:
+        switch(optname)
+        {
+        case PACKET_RESERVE:
+            goto int_case;
+
+        case PACKET_STATISTICS:
+
+            // in go_getsockopt, optlen is a pointer to the length, use *(int*)
+
+            len = *(int*) optlen;
+            if (len == sizeof(struct target_tpacket_stats)) // TPACKET_V1
+            {
+                struct tpacket_stats* host_tpacket_stats;
+                host_tpacket_stats = (struct tpacket_stats*) alloca(len);
+                lv = sizeof(host_tpacket_stats);
+
+                target_to_host_tpacket_stats(host_tpacket_stats, optval_addr, len);
+                ret = get_errno(getsockopt(sockfd, level, optname,
+                                           host_tpacket_stats, &lv));
+
+                // Now the kenel has fill the host struct, need to fill the target one
+                struct target_tpacket_stats * target_tpkt_stats = 0;
+                if (!lock_user_struct(VERIFY_WRITE, target_tpkt_stats, optval_addr, 0))
+                    return -TARGET_EFAULT;
+
+                target_tpkt_stats->tp_packets = tswapal(host_tpacket_stats->tp_packets);
+                target_tpkt_stats->tp_drops = tswapal(host_tpacket_stats->tp_drops);
+
+                unlock_user_struct(target_tpkt_stats, optval_addr, 1);
+
+            }
+            else if(len == sizeof(struct target_tpacket_stats_v3)) // TPACKET_V3
+            {
+                struct tpacket_stats_v3* host_tpacket_stats;
+                host_tpacket_stats = (struct tpacket_stats_v3*) alloca(len);
+                lv = sizeof(host_tpacket_stats);
+
+                target_to_host_tpacket_stats3(host_tpacket_stats, optval_addr, len);
+                ret = get_errno(getsockopt(sockfd, level, optname,
+                                           host_tpacket_stats, &lv));
+
+                // Now the kenel has fill the host struct, need to fill the target one
+                struct target_tpacket_stats_v3 * target_tpkt_stats = 0;
+                if (!lock_user_struct(VERIFY_WRITE, target_tpkt_stats, optval_addr, 0))
+                    return -TARGET_EFAULT;
+
+                target_tpkt_stats->tp_packets = tswapal(host_tpacket_stats->tp_packets);
+                target_tpkt_stats->tp_drops = tswapal(host_tpacket_stats->tp_drops);
+                target_tpkt_stats->tp_drops = tswapal(host_tpacket_stats->tp_freeze_q_cnt);
+
+                unlock_user_struct(target_tpkt_stats, optval_addr, 1);
+            }
+            else{
+                return -TARGET_EINVAL;
+            }
+
+            break;
+
+        case PACKET_HDRLEN:
+            val = 0;
+            if (optlen < sizeof(uint32_t)) {
+                return -TARGET_EINVAL;
+            }
+
+            if (get_user_u32(val, optval_addr)) {
+                return -TARGET_EFAULT;
+            }
+            lv = sizeof(lv);
+            ret = get_errno(getsockopt(sockfd, level, optname, &val, &lv));
+            if (put_user_u32(val, optval_addr))
+                return -TARGET_EFAULT;
+        break;
+        default:
+            goto unimplemented;
+        }
+    break;
     case TARGET_SOL_SOCKET:
         level = SOL_SOCKET;
         switch (optname) {
@@ -4511,7 +4741,7 @@ abi_long do_set_thread_area(CPUX86State *env, abi_ulong ptr)
     }
     unlock_user_struct(target_ldt_info, ptr, 1);
 
-    if (ldt_info.entry_number < TARGET_GDT_ENTRY_TLS_MIN || 
+    if (ldt_info.entry_number < TARGET_GDT_ENTRY_TLS_MIN ||
         ldt_info.entry_number > TARGET_GDT_ENTRY_TLS_MAX)
            return -TARGET_EINVAL;
     seg_32bit = ldt_info.flags & 1;
@@ -4589,7 +4819,7 @@ static abi_long do_get_thread_area(CPUX86State *env, abi_ulong ptr)
     lp = (uint32_t *)(gdt_table + idx);
     entry_1 = tswap32(lp[0]);
     entry_2 = tswap32(lp[1]);
-    
+
     read_exec_only = ((entry_2 >> 9) & 1) ^ 1;
     contents = (entry_2 >> 10) & 3;
     seg_not_present = ((entry_2 >> 15) & 1) ^ 1;
@@ -4605,8 +4835,8 @@ static abi_long do_get_thread_area(CPUX86State *env, abi_ulong ptr)
         (read_exec_only << 3) | (limit_in_pages << 4) |
         (seg_not_present << 5) | (useable << 6) | (lm << 7);
     limit = (entry_1 & 0xffff) | (entry_2  & 0xf0000);
-    base_addr = (entry_1 >> 16) | 
-        (entry_2 & 0xff000000) | 
+    base_addr = (entry_1 >> 16) |
+        (entry_2 & 0xff000000) |
         ((entry_2 & 0xff) << 16);
     target_ldt_info->base_addr = tswapal(base_addr);
     target_ldt_info->limit = tswap32(limit);
@@ -8789,7 +9019,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
         break;
 #if defined(TARGET_NR_fchownat)
     case TARGET_NR_fchownat:
-        if (!(p = lock_user_string(arg2))) 
+        if (!(p = lock_user_string(arg2)))
             goto efault;
         ret = get_errno(fchownat(arg1, p, low2highuid(arg3),
                                  low2highgid(arg4), arg5));
@@ -9276,7 +9506,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
         case TARGET_F_GETLK64:
 #ifdef TARGET_ARM
             if (((CPUARMState *)cpu_env)->eabi) {
-                if (!lock_user_struct(VERIFY_READ, target_efl, arg3, 1)) 
+                if (!lock_user_struct(VERIFY_READ, target_efl, arg3, 1))
                     goto efault;
                 fl.l_type = tswap16(target_efl->l_type);
                 fl.l_whence = tswap16(target_efl->l_whence);
@@ -9287,7 +9517,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
             } else
 #endif
             {
-                if (!lock_user_struct(VERIFY_READ, target_fl, arg3, 1)) 
+                if (!lock_user_struct(VERIFY_READ, target_fl, arg3, 1))
                     goto efault;
                 fl.l_type = tswap16(target_fl->l_type);
                 fl.l_whence = tswap16(target_fl->l_whence);
@@ -9300,7 +9530,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
 	    if (ret == 0) {
 #ifdef TARGET_ARM
                 if (((CPUARMState *)cpu_env)->eabi) {
-                    if (!lock_user_struct(VERIFY_WRITE, target_efl, arg3, 0)) 
+                    if (!lock_user_struct(VERIFY_WRITE, target_efl, arg3, 0))
                         goto efault;
                     target_efl->l_type = tswap16(fl.l_type);
                     target_efl->l_whence = tswap16(fl.l_whence);
@@ -9311,7 +9541,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
                 } else
 #endif
                 {
-                    if (!lock_user_struct(VERIFY_WRITE, target_fl, arg3, 0)) 
+                    if (!lock_user_struct(VERIFY_WRITE, target_fl, arg3, 0))
                         goto efault;
                     target_fl->l_type = tswap16(fl.l_type);
                     target_fl->l_whence = tswap16(fl.l_whence);
@@ -9327,7 +9557,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
         case TARGET_F_SETLKW64:
 #ifdef TARGET_ARM
             if (((CPUARMState *)cpu_env)->eabi) {
-                if (!lock_user_struct(VERIFY_READ, target_efl, arg3, 1)) 
+                if (!lock_user_struct(VERIFY_READ, target_efl, arg3, 1))
                     goto efault;
                 fl.l_type = tswap16(target_efl->l_type);
                 fl.l_whence = tswap16(target_efl->l_whence);
@@ -9338,7 +9568,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
             } else
 #endif
             {
-                if (!lock_user_struct(VERIFY_READ, target_fl, arg3, 1)) 
+                if (!lock_user_struct(VERIFY_READ, target_fl, arg3, 1))
                     goto efault;
                 fl.l_type = tswap16(target_fl->l_type);
                 fl.l_whence = tswap16(target_fl->l_whence);
