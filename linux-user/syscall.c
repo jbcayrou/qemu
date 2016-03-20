@@ -7304,7 +7304,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
         break;
 #if defined(TARGET_NR_select)
     case TARGET_NR_select:
-#if defined(TARGET_S390X) || defined(TARGET_ALPHA)
+#if defined(TARGET_S390X) || defined(TARGET_ALPHA) || defined(TARGET_X86_64)
         ret = do_select(arg1, arg2, arg3, arg4, arg5);
 #else
         {
